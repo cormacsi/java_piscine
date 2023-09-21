@@ -111,7 +111,7 @@ public class UsersRepositoryJdbcImpl implements UsersRepository {
                 user = new User(resultSet.getLong("id"), email, resultSet.getString("password"));
             }
         } catch (SQLException e) {
-            System.err.println("An error in delete method of UsersRepositoryJdbcImpl");
+            System.err.println("An error in findByEmail method of UsersRepositoryJdbcImpl");
         }
         return Optional.ofNullable(user);
     }
