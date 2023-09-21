@@ -1,5 +1,8 @@
 package school21.spring.service.repositories;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Repository;
 import school21.spring.service.models.User;
 
 import javax.sql.DataSource;
@@ -8,11 +11,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+@Repository("jdbc")
 public class UsersRepositoryJdbcImpl implements UsersRepository {
 
     private final DataSource dataSource;
 
-    public UsersRepositoryJdbcImpl(DataSource dataSource) {
+    @Autowired
+    public UsersRepositoryJdbcImpl(@Qualifier("hikariDataSource") DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
@@ -25,7 +30,7 @@ public class UsersRepositoryJdbcImpl implements UsersRepository {
             statement.execute();
             ResultSet resultSet = statement.getResultSet();
             if (resultSet.next()) {
-                user = new User(id, resultSet.getString("email"));
+                user = new User(id, resultSet.getString("email"), resultSet.getString("password"));
             }
         } catch (SQLException e) {
             System.err.println("An error in findById method of UsersRepositoryJdbcImpl");
@@ -42,7 +47,8 @@ public class UsersRepositoryJdbcImpl implements UsersRepository {
             ResultSet resultSet = statement.getResultSet();
             while (resultSet.next()) {
                 usersList.add(new User(resultSet.getLong("id"),
-                        resultSet.getString("email")));
+                        resultSet.getString("email"),
+                        resultSet.getString("password")));
             }
         } catch (SQLException e) {
             System.err.println("An error in findAll method of UsersRepositoryJdbcImpl");
@@ -53,9 +59,10 @@ public class UsersRepositoryJdbcImpl implements UsersRepository {
     @Override
     public void save(User entity) {
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement("INSERT INTO users (email) VALUES (?)",
+             PreparedStatement statement = connection.prepareStatement("INSERT INTO users (email, password) VALUES (?, ?)",
                      Statement.RETURN_GENERATED_KEYS)) {
             statement.setString(1, entity.getEmail());
+            statement.setString(2, entity.getPassword());
             statement.execute();
             ResultSet key = statement.getGeneratedKeys();
             if (key.next()) {
@@ -71,9 +78,10 @@ public class UsersRepositoryJdbcImpl implements UsersRepository {
     @Override
     public void update(User entity) {
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement("UPDATE users SET email=? WHERE id=?")) {
+             PreparedStatement statement = connection.prepareStatement("UPDATE users SET email=?, password=? WHERE id=?")) {
             statement.setString(1, entity.getEmail());
-            statement.setLong(2, entity.getId());
+            statement.setString(2, entity.getPassword());
+            statement.setLong(3, entity.getId());
             statement.execute();
         } catch (SQLException e) {
             System.err.println("An error in update method of UsersRepositoryJdbcImpl");
@@ -100,7 +108,7 @@ public class UsersRepositoryJdbcImpl implements UsersRepository {
             statement.execute();
             ResultSet resultSet = statement.getResultSet();
             if (resultSet.next()) {
-                user = new User(resultSet.getLong("id"), email);
+                user = new User(resultSet.getLong("id"), email, resultSet.getString("password"));
             }
         } catch (SQLException e) {
             System.err.println("An error in delete method of UsersRepositoryJdbcImpl");
