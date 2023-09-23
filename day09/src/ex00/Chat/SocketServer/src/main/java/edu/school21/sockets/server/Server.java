@@ -13,35 +13,30 @@ public class Server {
 
     private final Integer port;
 
-    ApplicationContext ctx;
+    private final UsersService usersService;
 
-    UsersService usersService;
+    private BufferedReader in;
 
-    ServerSocket server;
-
-    Socket clientSocket;
-
-    BufferedReader in;
-
-    PrintWriter out;
+    private PrintWriter out;
 
     public Server(Integer port) {
         this.port = port;
-        ctx = new AnnotationConfigApplicationContext(SocketsApplicationConfig.class);
+        ApplicationContext ctx = new AnnotationConfigApplicationContext(SocketsApplicationConfig.class);
         usersService = ctx.getBean("usersServiceImpl", UsersService.class);
     }
 
     public void start() {
-        try {
-            server = new ServerSocket(port);
-            clientSocket = server.accept();
+        try (ServerSocket server = new ServerSocket(port);
+             Socket clientSocket = server.accept()) {
 
             in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             out = new PrintWriter(clientSocket.getOutputStream(), true);
             out.println("Hello from Server!");
 
             menu();
-            stop();
+
+            in.close();
+            out.close();
         } catch (IOException e) {
             System.err.println("The server is not available!");
         }
@@ -77,12 +72,5 @@ public class Server {
             }
         }
         out.println("Successful!");
-    }
-
-    private void stop() throws IOException {
-        in.close();
-        out.close();
-        clientSocket.close();
-        server.close();
     }
 }
