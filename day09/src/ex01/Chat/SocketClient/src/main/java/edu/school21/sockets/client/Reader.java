@@ -17,15 +17,23 @@ public class Reader extends Thread {
     public void run() {
         try (PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
              Scanner scanner = new Scanner(System.in)) {
-            String line = scanner.nextLine();
-            while (!line.equalsIgnoreCase("exit")) {
-                out.println(line);
-                line = scanner.nextLine();
+            while (hasNextLine()) {
+                out.println(scanner.nextLine());
             }
-            out.println(line);
         } catch (IOException e) {
             System.err.println("IOException in Client reader");
             System.exit(1);
         }
+    }
+
+    private boolean hasNextLine() throws IOException {
+        while (System.in.available() == 0) {
+            try {
+                sleep(100);
+            } catch (InterruptedException e) {
+                return false;
+            }
+        }
+        return true;
     }
 }

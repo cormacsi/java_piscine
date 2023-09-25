@@ -20,7 +20,7 @@ public class Client {
             reader.start();
 
             writer.join();
-            reader.join();
+            reader.interrupt();
         } catch (IOException e) {
             System.err.println("The server is not available!");
         } catch (InterruptedException e) {
